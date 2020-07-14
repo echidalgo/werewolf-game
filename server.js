@@ -49,8 +49,8 @@ io.on('connection', function (socket) {
     //     socket.emit('observeGame');
     //     // players[socket.id].playing = false;
     // } else {
-        socket.broadcast.emit('newPlayer', players[socket.id]);
-        console.log(Object.keys(players).length, ' players');
+    socket.broadcast.emit('newPlayer', players[socket.id]);
+    console.log(Object.keys(players).length, ' players');
     // }
 
     socket.on('playerName', function (nameInfo) {
@@ -62,16 +62,16 @@ io.on('connection', function (socket) {
     socket.on('disconnect', function () {
         console.log('user disconnected: ', socket.id);
         // if (players[socket.id].playing) {
-            // emit a message to all players to remove this player
-            io.emit('disconnect', socket.id);
-            console.log(Object.keys(players).length, ' players');
+        // emit a message to all players to remove this player
+        io.emit('disconnect', socket.id);
+        console.log(Object.keys(players).length, ' players');
 
-            io.emit('reset');
-            playedCards = new Array();
-            gameStarted = false;
-            Object.keys(allCards).forEach(function (char) {
-                allCards[char] = false;
-            });
+        io.emit('reset');
+        playedCards = new Array();
+        gameStarted = false;
+        Object.keys(allCards).forEach(function (char) {
+            allCards[char] = false;
+        });
         // }
         delete players[socket.id];
     });
@@ -150,7 +150,14 @@ io.on('connection', function (socket) {
     });
 });
 
-server.listen(8081, function () {
+// server.listen(8081, function () {
+//     console.log(`Listening on ${server.address().port}`);
+// });
+let port = process.env.PORT;
+if (port == null || port == "") {
+    port = 8081;
+}
+server.listen(port, function () {
     console.log(`Listening on ${server.address().port}`);
 });
 

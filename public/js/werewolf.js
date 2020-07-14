@@ -282,10 +282,10 @@ function create() {
         { fill: '#472F0D', backgroundColor: '#FFD966' });
     hideAll.setVisible(false);
     showAll.setVisible(false);
-    start.setVisible(false);
+    // start.setVisible(false);
 
-    setName = this.add.text(600, 500, 'Join Game',
-        { fill: '#472F0D', backgroundColor: '#FFD966' }).setInteractive();
+    // setName = this.add.text(550, 500, 'Join Game',
+    //     { fill: '#472F0D', backgroundColor: '#FFD966' }).setInteractive();
     // var inputText = this.add.rexInputText(400, 400, 10, 10, {
     //     type: 'textarea',
     //     text: 'hello world',
@@ -294,11 +294,11 @@ function create() {
     // inputText = this.add.rexInputText(600, 400, 150, 50,
     //     { color: '#472F0D', backgroundColor: '#FFD966',
     //     fontSize: '12px', placeholder: 'set player name' });
-    setName.on('pointerup', function (pointer) {
-        // self.emit('playerName', { playerId: self.player.playerId, name: inputText.text })
-        start.setVisible(true);
-        setName.setVisible(false);
-    });
+    // setName.on('pointerup', function (pointer) {
+    //     // self.emit('playerName', { playerId: self.player.playerId, name: inputText.text })
+    //     start.setVisible(true);
+    //     setName.setVisible(false);
+    // });
 
     start.on('pointerup', function (pointer) {
         self.socket.emit('startGame');
