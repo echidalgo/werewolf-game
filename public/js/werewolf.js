@@ -80,6 +80,8 @@ var allPlayers;
 var cardCount = 0;
 var selectedCard;
 var table;
+var start;
+var reset;
 var hideAll;
 var showAll;
 var originX = 600;
@@ -188,18 +190,22 @@ function create() {
         var xCoor = originX + playerInfo.x;
         var yCoor = originY + playerInfo.y;
         var id = playerInfo.playerId;
-        allPlayers[id].setPosition(xCoor, yCoor);
-        allPlayers[id].character = cards[playerInfo.index];
-        allPlayers[id].setVisible(true);
-        allPlayers[id].hide();
-        allPlayers[id].setInteractive();
+        var playerToUpdate = allPlayers[id];
+        playerToUpdate.setPosition(xCoor, yCoor);
+        playerToUpdate.setVisible(true);
+        playerToUpdate.setInteractive();
+    });
 
-        // var nameX = originX + (1.3 * playerInfo.x);
-        // var nameY = originY + (1.3 * playerInfo.y);
-        var nameX = Math.floor(Math.random() * 200) + 50;
-        var nameY = Math.floor(Math.random() * 200) + 50;
-        playerNames[id].setVisible(true);
-        playerNames[id].setPosition(nameX, nameY);
+    this.socket.on('addName', function (nameInfo) {
+        var nameX = originX + (1.4 * nameInfo.x);
+        var nameY = originY + (1.4 * nameInfo.y);
+        if (nameY > 730) {
+            nameY = 730;
+        }
+        var name = self.add.text(nameX, nameY, nameInfo.name,
+            { fill: '#472F0D', backgroundColor: '#FFD966' });
+        playerNames[nameInfo.playerId] = name;
+        allPlayers[nameInfo.playerId].playerName = nameInfo.name;
     });
 
     this.socket.on('hiddenAll', function () {
@@ -214,7 +220,9 @@ function create() {
         });
     });
 
-    this.socket.on('reset', function () {
+    this.socket.on('gameReset', function () {
+        reset.setAlpha(0.4);
+        reset.removeInteractive();
         reset();
     });
 
@@ -276,12 +284,15 @@ function create() {
     playerCountText = this.add.text(50, 530, '', { fill: '#00ff00' });
     start = this.add.text(550, 600, 'Start Game',
         { fill: '#472F0D', backgroundColor: '#FFD966' }).setInteractive();
+    reset = this.add.text(100, 650, 'Reset',
+        { fill: '#472F0D', backgroundColor: '#FFD966' }).setInteractive();
     hideAll = this.add.text(100, 450, 'Hide All',
         { fill: '#472F0D', backgroundColor: '#FFD966' });
     showAll = this.add.text(100, 500, 'Show All',
         { fill: '#472F0D', backgroundColor: '#FFD966' });
     hideAll.setVisible(false);
     showAll.setVisible(false);
+    reset.setVisible(false);
     // start.setVisible(false);
 
     // setName = this.add.text(550, 500, 'Join Game',
@@ -304,6 +315,10 @@ function create() {
         self.socket.emit('startGame');
     });
 
+    // reset.on('pointerup', function () {
+    //     self.socket.emit('resetGame');
+    // })
+
     this.input.on('gameobjectup', function (pointer, gameObject) {
         if (gameObject instanceof Card) {
             self.socket.emit('chooseCard', { character: gameObject.character, chosen: !gameObject.chosen });
@@ -313,6 +328,7 @@ function create() {
             } else {
                 if (selectedCard === gameObject) {
                     // deselect card
+                    gameObject.flip();
                     selectedCard.deselect();
                     selectedCard = null;
                 } else if (selectedCard == null) {
@@ -328,22 +344,29 @@ function create() {
                     selectedCard = null;
                 }
             }
+            // } else if (gameObject instanceof Phaser.GameObject.Image) {
+        } else if (gameObject === table) {
+            selectedCard.deselect();
+            selectedCard = null;
         } else if (gameObject === hideAll) {
             self.socket.emit('hideAll');
         } else if (gameObject === showAll) {
             self.socket.emit('showAll');
+        } else if (gameObject === reset) {
+            reset.setAlpha(0.4);
+            reset.removeInteractive();
+            self.socket.emit('resetGame');
         }
     });
 }
 
 function update() {
-    var pointer = this.input.activePointer;
-
-    name2.setText([
-        'x: ' + pointer.worldX,
-        'y: ' + pointer.worldY,
-        'isDown: ' + pointer.isDown
-    ]);
+    // var pointer = this.input.activePointer;
+    // name2.setText([
+    //     'x: ' + pointer.worldX,
+    //     'y: ' + pointer.worldY,
+    //     'isDown: ' + pointer.isDown
+    // ]);
 
     cardCountText.setText("Cards selected: " + cardCount);
     playerCountText.setText("Players online: " + Object.keys(allPlayers).length);
@@ -354,7 +377,7 @@ function reset() {
     allCards.forEach(function (card) {
         card.setInteractive();
         card.setVisible(true);
-        card.deselect();
+        // card.deselect();
     });
     hideAll.setVisible(false);
     showAll.setVisible(false);
@@ -362,6 +385,7 @@ function reset() {
     cardCountText.setVisible(true);
     playerCountText.setVisible(true);
     table.setVisible(false);
+    reset.setVisible(false);
 
     if (allPlayers['center1']) {
         allPlayers['center1'].destroy();
@@ -372,7 +396,10 @@ function reset() {
         delete allPlayers['center3'];
     }
     Object.keys(allPlayers).forEach(function (playerId) {
-        allPlayers[playerId].setVisible(false);
+        allPlayers[playerId].destroy();
+        delete allPlayers[playerId];
+        playerNames[playerId].destroy();
+        delete playerNames[playerId];
     });
 }
 
@@ -385,6 +412,8 @@ function startGame() {
     showAll.setInteractive();
     hideAll.setVisible(true);
     showAll.setVisible(true);
+    reset.setVisible(true);
+    reset.setInteractive();
 
     allCards.forEach(function (c) {
         c.setVisible(false);
@@ -394,6 +423,7 @@ function startGame() {
     Object.keys(allPlayers).forEach(function (playerId) {
         allPlayers[playerId].setVisible(true);
         allPlayers[playerId].setInteractive();
+        playerNames[playerId].setVisible(true);
     })
 }
 
@@ -403,11 +433,6 @@ function addPlayer(self, playerInfo) {
     self.player.setVisible(false);
     self.player.setScale(0.7);
     allPlayers[playerInfo.playerId] = self.player;
-
-    var name = self.add.text(playerInfo.x, playerInfo.y, playerInfo.name,
-        { fill: '#472F0D', backgroundColor: '#FFD966' });
-    playerNames[playerInfo.playerId] = name;
-    // name.setVisible(false);
 }
 
 function addOtherPlayers(self, playerInfo) {
@@ -416,11 +441,6 @@ function addOtherPlayers(self, playerInfo) {
     otherPlayer.setVisible(false);
     otherPlayer.setScale(0.7);
     allPlayers[playerInfo.playerId] = otherPlayer;
-
-    var name = self.add.text(playerInfo.x, playerInfo.y, playerInfo.name,
-        { fill: '#472F0D', backgroundColor: '#FFD966' });
-    playerNames[playerInfo.playerId] = name;
-    // name.setVisible(false);
 }
 
 function shuffle(a) {

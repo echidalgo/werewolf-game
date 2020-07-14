@@ -14,6 +14,7 @@ var allCards = {
 let playedCards = new Array();
 var gameStarted = false;
 var posns;
+var names = ['Emilia', 'Hazel', 'Sophie', 'Lily', 'Emma', 'Marley', 'Roland'];
 
 app.use(express.static(__dirname + '/public'));
 
@@ -26,13 +27,9 @@ io.on('connection', function (socket) {
 
     // create a new player and add it to our players object
     players[socket.id] = {
-        // x: Math.floor(Math.random() * 100) + 50,
-        y: Math.floor(Math.random() * 300) + 50,
-        x: 30,
-        // y: 100,
+        x: 0,
+        y: 0,
         playerId: socket.id,
-        name: 'player' + socket.id,
-        // character: Object.keys(allCards)[Math.floor(Math.random() * 10)]
         character: 'card'
         // playing: true
     };
@@ -44,36 +41,29 @@ io.on('connection', function (socket) {
             socket.emit('cardChosen', { character: char, chosen: true });
         }
     });
-    // if (gameStarted) {
-    //     // if game has already started, follow updates but don't allow any card interaction
-    //     socket.emit('observeGame');
-    //     // players[socket.id].playing = false;
+    if (gameStarted) {
+        // if game has already started, follow updates but don't allow any card interaction
+        socket.emit('observeGame');
+        // players[socket.id].playing = false;
+    }
     // } else {
     socket.broadcast.emit('newPlayer', players[socket.id]);
     console.log(Object.keys(players).length, ' players');
     // }
 
-    socket.on('playerName', function (nameInfo) {
-        players[nameInfo.playerId].name = nameInfo.name;
-        socket.broadcast.emit('nameChange', nameInfo);
-    });
+    // socket.on('playerName', function (nameInfo) {
+    //     players[nameInfo.playerId].name = nameInfo.name;
+    //     socket.broadcast.emit('nameChange', nameInfo);
+    // });
 
     // when a player disconnects, remove them from our players object
     socket.on('disconnect', function () {
         console.log('user disconnected: ', socket.id);
-        // if (players[socket.id].playing) {
-        // emit a message to all players to remove this player
         io.emit('disconnect', socket.id);
         console.log(Object.keys(players).length, ' players');
-
-        io.emit('reset');
-        playedCards = new Array();
-        gameStarted = false;
-        Object.keys(allCards).forEach(function (char) {
-            allCards[char] = false;
-        });
-        // }
         delete players[socket.id];
+
+        // resetGame();
     });
 
     socket.on('getCurrentPlayers', function () {
@@ -81,7 +71,6 @@ io.on('connection', function (socket) {
     });
 
     socket.on('chooseCard', function (cardData) {
-        // console.log(cardData.character + ': ' + cardData.chosen);
         allCards[cardData.character] = cardData.chosen;
         io.emit('cardChosen', cardData);
     });
@@ -99,20 +88,26 @@ io.on('connection', function (socket) {
         });
         shuffle(playedCards);
 
-        // posns = makePositions(Object.keys(players).length, 250);
         if (playedCards.length - 3 >= Object.keys(players).length) {
             posns = makePositions(playedCards.length - 3, 250);
         } else {
             posns = makePositions(Object.keys(players).length - 3, 250);
         }
         var idx = 0;
+        var nameIdx = 0;
         Object.keys(players).forEach(function (id) {
             players[id].character = playedCards[idx];
             players[id].x = posns[idx][0];
             players[id].y = posns[idx][1];
             io.emit('updatePlayerCharacter', { playerId: id, character: playedCards[idx] });
             io.emit('movePlayer', { playerId: id, x: players[id].x, y: players[id].y });
+            io.emit('addName', { playerId: id, x: players[id].x, y: players[id].y, name: names[nameIdx] });
             idx++;
+            if (nameIdx >= names.length) {
+                nameIdx = 0;
+            } else {
+                nameIdx++;
+            }
         });
 
         players['center1'] = { playerId: 'center1', character: playedCards[idx] };
@@ -148,6 +143,26 @@ io.on('connection', function (socket) {
         players[cardData.playerId2].character = firstChar;
         io.emit('updatePlayerCharacter', { playerId: cardData.playerId2, character: firstChar })
     });
+
+    socket.on('resetGame', function () {
+        // resetGame();
+        io.emit('gameReset');
+        nameIdx = 0;
+        gameStarted = false;
+        playedCards = new Array();
+        posns = null;
+        // Object.keys(allCards).forEach(function (char) {
+        //     allCards[char] = false;
+        // });
+        Object.keys(players).forEach(function (id) {
+            delete players[id];
+        });
+        if (players['center1']) {
+            delete players['center1'];
+            delete players['center2'];
+            delete players['center3'];
+        }
+    });
 });
 
 // server.listen(8081, function () {
@@ -160,6 +175,25 @@ if (port == null || port == "") {
 server.listen(port, function () {
     console.log(`Listening on ${server.address().port}`);
 });
+
+function resetGame() {
+    io.emit('gameReset');
+    nameIdx = 0;
+    gameStarted = false;
+    playedCards = new Array();
+    posns = null;
+    Object.keys(allCards).forEach(function (char) {
+        allCards[char] = false;
+    });
+    // Object.keys(players).forEach(function (id) {
+    //     delete players[id];
+    // });
+    if (players['center1']) {
+        delete players['center1'];
+        delete players['center2'];
+        delete players['center3'];
+    }
+}
 
 function shuffle(a) {
     for (let i = a.length - 1; i > 0; i--) {
