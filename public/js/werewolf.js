@@ -203,7 +203,7 @@ function create() {
             nameY = 730;
         }
         var name = self.add.text(nameX, nameY, nameInfo.name,
-            { fill: '#472F0D', backgroundColor: '#FFD966' });
+            { fill: '#472F0D', backgroundColor: '#FFD966' }).setOrigin(0.5);
         playerNames[nameInfo.playerId] = name;
         allPlayers[nameInfo.playerId].playerName = nameInfo.name;
     });
