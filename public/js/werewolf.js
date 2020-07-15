@@ -148,10 +148,10 @@ function create() {
     this.socket.on('disconnect', function (playerId) {
         Object.keys(allPlayers).forEach(function (otherPlayerId) {
             if (playerId === otherPlayerId) {
-                allPlayers[playerId].destroy();
-                delete allPlayers[playerId];
-                playerNames[playerId].destroy();
-                delete playerNames[playerId];
+                // allPlayers[playerId].destroy();
+                // delete allPlayers[playerId];
+                // playerNames[playerId].destroy();
+                // delete playerNames[playerId];
             }
         });
     });
