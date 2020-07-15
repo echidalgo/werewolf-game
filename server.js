@@ -14,7 +14,7 @@ var allCards = {
 let playedCards = new Array();
 var gameStarted = false;
 var posns;
-var names = ['Emilia', 'Hazel', 'Sophie', 'Emma', 'Marley', 'Roland'];
+var names = ['Emilia', 'Hazel', 'Sophie', 'Emma', 'Marley', 'Roland', 'Lily'];
 // 'Lily',
 
 app.use(express.static(__dirname + '/public'));
