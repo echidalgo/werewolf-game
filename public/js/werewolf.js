@@ -145,15 +145,17 @@ function create() {
         addOtherPlayers(self, playerInfo);
     });
 
-    this.socket.on('disconnect', function (playerId) {
-        Object.keys(allPlayers).forEach(function (otherPlayerId) {
-            if (playerId === otherPlayerId) {
-                // allPlayers[playerId].destroy();
-                // delete allPlayers[playerId];
-                // playerNames[playerId].destroy();
-                // delete playerNames[playerId];
-            }
-        });
+    this.socket.on('disconnect', function (playerInfo) {
+        if (playerInfo.disconnectCard) {
+            Object.keys(allPlayers).forEach(function (otherPlayerId) {
+                if (playerInfo.playerId === otherPlayerId) {
+                    allPlayers[otherPlayerId].destroy();
+                    delete allPlayers[otherPlayerId];
+                    playerNames[otherPlayerId].destroy();
+                    delete playerNames[otherPlayerId];
+                }
+            });
+        }
     });
 
     this.socket.on('cardChosen', function (cardData) {

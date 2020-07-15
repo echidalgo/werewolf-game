@@ -60,7 +60,7 @@ io.on('connection', function (socket) {
     // when a player disconnects, remove them from our players object
     socket.on('disconnect', function () {
         console.log('user disconnected: ', socket.id);
-        io.emit('disconnect', socket.id);
+        io.emit('disconnect', {playerId: socket.id, disconnectCard: !gameStarted});
         console.log(Object.keys(players).length, ' players');
         delete players[socket.id];
 
