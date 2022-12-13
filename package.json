@@ -18,7 +18,7 @@
   "homepage": "https://github.com/echidalgo/werewolf-game#readme",
   "description": "",
   "dependencies": {
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "phaser3-rex-plugins": "^1.1.19",
     "socket.io": "^2.3.0"
   },
